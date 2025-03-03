@@ -46,22 +46,52 @@ app.get("/", async (c) => {
   return c.text("Hello Hono!");
 });
 
-app.get("/convert/eur/:amount", async (c) => {
+app.get("/:currency", async (c) => {
+  const currency = c.req.param("currency");
+  try {
+    const res = await fetch(VCB_EXRATE_API);
+    const rawText = await res.text();
+    const data = parseExrateData(rawText);
+    const currencyRate = data.rates.find(
+      (rate) => rate.currencyCode.toLowerCase() === currency,
+    );
+
+    if (!currencyRate) {
+      throw new Error(`${currency} rate not found`);
+    }
+
+    const formattedData: FormattedExrateData = {
+      ...data,
+      rates: [currencyRate],
+    };
+    return c.json(formattedData);
+  } catch (error) {
+    console.error(error);
+  }
+
+  return c.text("Hello Hono!");
+});
+
+app.get("/convert/:currency/:amount", async (c) => {
   const amount = c.req.param("amount");
+  const currency = c.req.param("currency");
 
   try {
     const res = await fetch(VCB_EXRATE_API);
     const rawText = await res.text();
     const data = parseExrateData(rawText);
-    const eurRate = data.rates.find((rate) => rate.currencyCode === "EUR");
+    const currencyRate = data.rates.find(
+      (rate) => rate.currencyCode.toLowerCase() === currency,
+    );
 
-    if (!eurRate) {
-      throw new Error("EUR rate not found");
+    if (!currencyRate) {
+      throw new Error(`${currency} rate not found`);
     }
 
     const sellTransfer =
-      ((eurRate.sell + eurRate.transfer) / 2) * Number(amount);
-    const sellBuy = ((eurRate.sell + eurRate.buy) / 2) * Number(amount);
+      ((currencyRate.sell + currencyRate.transfer) / 2) * Number(amount);
+    const sellBuy =
+      ((currencyRate.sell + currencyRate.buy) / 2) * Number(amount);
 
     const convertData: ConvertAmountData = {
       dateTime: data.dateTime,
