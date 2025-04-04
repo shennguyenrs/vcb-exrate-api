@@ -1,15 +1,12 @@
 {
   "name": "eur-er-api",
   "scripts": {
-    "dev": "wrangler dev",
-    "deploy": "wrangler deploy --minify"
+    "dev": "bun --hot index.ts"
   },
   "dependencies": {
     "fast-xml-parser": "^5.0.9",
-    "hono": "^4.7.5"
+    "hono": "^4.7.5",
+    "puppeteer": "^24.5.0"
   },
-  "devDependencies": {
-    "@cloudflare/workers-types": "^4.20250327.0",
-    "wrangler": "^4.6.0"
-  }
+  "devDependencies": {}
 }

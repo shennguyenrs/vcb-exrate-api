@@ -7,8 +7,7 @@ export interface ExrateItem {
 }
 
 export interface FormattedExrateData {
-  dateTime: string;
-  lastUpdate: string;
+  lastUpdated: string;
   source: string;
   rates: {
     currencyCode: string;
@@ -23,4 +22,24 @@ export interface ConvertAmountData {
   dateTime: string;
   sellTransfer: number;
   sellBuy: number;
+}
+
+export interface SourceDetails {
+  name: string;
+  lastUpdated: string;
+  currencyCode?: string;
+  currencyName?: string;
+  rate: {
+    sell: number;
+    buy: number;
+    transfer: number;
+  };
+}
+
+export interface ApiResponse {
+  success: boolean;
+  message: string;
+  data: {
+    [key: string]: any;
+  };
 }

@@ -1,17 +1,16 @@
 import { Context, Hono } from "hono";
-import { convertVcb } from "../utils";
+import { convertVcb } from "@/utils";
 
 const convertRoutes = new Hono();
 
-convertRoutes.get("/:currency/:amount", convertAmountBasedOnCurrency);
+convertRoutes.get("/eur/:amount", convertAmountBasedOnCurrency);
 
 async function convertAmountBasedOnCurrency(c: Context) {
   const amount = c.req.param("amount");
-  const currency = c.req.param("currency");
 
   try {
     const convertedVcb = await convertVcb({
-      currency,
+      currency: "eur",
       amount,
     });
     return c.json(convertedVcb);

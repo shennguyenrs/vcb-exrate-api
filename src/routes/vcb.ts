@@ -1,7 +1,7 @@
+import { VCB_EXRATE_API } from "@/constants";
+import { FormattedExrateData } from "@/types";
+import { parseVcbExrateData } from "@/utils";
 import { Context, Hono } from "hono";
-import { VCB_EXRATE_API } from "../constants";
-import { FormattedExrateData } from "../types";
-import { parseVcbExrateData } from "../utils";
 
 const vcbRoutes = new Hono();
 
@@ -14,10 +14,33 @@ async function getAllRates(c: Context) {
     const rawText = await res.text();
     const data = parseVcbExrateData(rawText);
 
-    return c.json(data);
+    const rates = data.rates.map((rate) => ({
+      name: "vcb",
+      lastUpdated: data.lastUpdated,
+      currencyCode: rate.currencyCode,
+      currencyName: rate.currencyName,
+      rate: {
+        buy: rate.buy,
+        transfer: rate.transfer,
+        sell: rate.sell,
+      },
+    }));
+
+    const response = {
+      success: true,
+      message: "Get Vietcombank exchange rates successfully",
+      data: {
+        rates,
+      },
+    };
+
+    return c.json(response);
   } catch (error) {
     console.error(error);
-    return c.text("No rates found");
+    return c.json({
+      success: false,
+      message: "Get Vietcombank exchange rates failed",
+    });
   }
 }
 
@@ -33,18 +56,37 @@ async function getRatesByCurrency(c: Context) {
     );
 
     if (!currencyRate) {
-      return c.text(`${currency} rate not found`);
+      return c.json({
+        success: false,
+        message: `${currency} rate not found`,
+      });
     }
 
-    const formattedData: FormattedExrateData = {
-      ...data,
-      rates: [currencyRate],
+    const response = {
+      success: true,
+      message: "Get vcb exchange rate successfully",
+      data: {
+        rates: [
+          {
+            name: "vcb",
+            lastUpdated: data.lastUpdated,
+            rate: {
+              buy: currencyRate.buy,
+              transfer: currencyRate.transfer,
+              sell: currencyRate.sell,
+            },
+          },
+        ],
+      },
     };
 
-    return c.json(formattedData);
+    return c.json(response);
   } catch (error) {
     console.error(error);
-    return c.text("No rates found");
+    return c.json({
+      success: false,
+      message: "Get Vietcombank exchange rate failed",
+    });
   }
 }
 

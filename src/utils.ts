@@ -1,6 +1,12 @@
+import { VCB_EXRATE_API } from "@/constants";
+import {
+  ConvertAmountData,
+  ExrateItem,
+  FormattedExrateData,
+  SourceDetails,
+} from "@/types";
 import { XMLParser } from "fast-xml-parser";
-import { ExrateItem, FormattedExrateData, ConvertAmountData } from "./types";
-import { VCB_EXRATE_API } from "./constants";
+import { launch } from "puppeteer";
 
 /* VCB helpers */
 
@@ -25,8 +31,7 @@ export function parseVcbExrateData(xmlData: string): FormattedExrateData {
     : [result.ExrateList.Exrate];
 
   const formattedData: FormattedExrateData = {
-    dateTime: result.ExrateList.DateTime,
-    lastUpdate: result.ExrateList.DateTime,
+    lastUpdated: result.ExrateList.DateTime,
     source: result.ExrateList.Source,
     rates: exrates.map((rate: ExrateItem) => ({
       currencyCode: rate.CurrencyCode,
@@ -46,13 +51,13 @@ export async function convertVcb({
 }: {
   currency: string;
   amount: string;
-}) {
+}): Promise<ConvertAmountData> {
   try {
     const res = await fetch(VCB_EXRATE_API);
     const rawText = await res.text();
     const data = parseVcbExrateData(rawText);
     const currencyRate = data.rates.find(
-      (rate) => rate.currencyCode.toLowerCase() === currency,
+      (rate) => rate.currencyCode.toLowerCase() === currency
     );
 
     if (!currencyRate) {
@@ -65,7 +70,7 @@ export async function convertVcb({
       ((currencyRate.sell + currencyRate.buy) / 2) * Number(amount);
 
     const convertData: ConvertAmountData = {
-      dateTime: data.dateTime,
+      dateTime: data.lastUpdated,
       sellTransfer: sellTransfer,
       sellBuy: sellBuy,
     };
@@ -77,6 +82,188 @@ export async function convertVcb({
       dateTime: "",
       sellTransfer: 0,
       sellBuy: 0,
-    } as ConvertAmountData;
+    };
   }
 }
+
+export async function scrapingVcbRates({
+  currency = "eur",
+}: {
+  currency?: string;
+}): Promise<SourceDetails> {
+  const noRates: SourceDetails = {
+    name: "vcb",
+    lastUpdated: new Date().toISOString(),
+    rate: {
+      sell: 0,
+      buy: 0,
+      transfer: 0,
+    },
+  };
+
+  try {
+    const res = await fetch(VCB_EXRATE_API);
+    const rawText = await res.text();
+    const data = parseVcbExrateData(rawText);
+    const currencyRateIdx = data.rates.findIndex(
+      (rate) => rate.currencyCode.toLowerCase() === currency
+    );
+
+    if (currencyRateIdx !== -1) {
+      return {
+        name: "vcb",
+        lastUpdated: data.lastUpdated,
+        rate: {
+          sell: data.rates[currencyRateIdx].sell,
+          buy: data.rates[currencyRateIdx].buy,
+          transfer: data.rates[currencyRateIdx].transfer,
+        },
+      };
+    }
+
+    return noRates;
+  } catch (error) {
+    console.error(error);
+    return noRates;
+  }
+}
+
+/* Taptapsend helpers */
+
+interface CurrencyOption {
+  value: string;
+  name: string;
+}
+
+const WAIT_TIME = 5;
+
+export async function waitForDropdown(page: any, selector: string) {
+  await page.waitForSelector(selector, { visible: true });
+  await new Promise((r) => setTimeout(r, WAIT_TIME));
+  await page.click(selector);
+  await new Promise((r) => setTimeout(r, WAIT_TIME));
+}
+
+export async function findCurrencyOption(
+  page: any,
+  selector: string,
+  searchText: string
+): Promise<CurrencyOption> {
+  return page.evaluate(
+    (sel: string, text: string) => {
+      const dropdown = document.querySelector(sel);
+      if (!dropdown) {
+        throw new Error(`Dropdown ${sel} not found`);
+      }
+
+      const allOptions = Array.from(
+        document.querySelectorAll(
+          `${sel} option, [role='option'], .dropdown-item`
+        )
+      ).map((opt) => ({
+        text: opt.textContent?.trim(),
+        value: (opt as HTMLOptionElement).value,
+      }));
+
+      // Split search text into parts and look for each part
+      const searchParts = text.toLowerCase().split(" ");
+      const optionIndex = allOptions.findIndex((i) => {
+        const optionText = i.text?.toLowerCase() || "";
+        return searchParts.every((part) => optionText.includes(part));
+      });
+
+      if (optionIndex === -1) {
+        throw new Error(
+          `Option ${text} not found in dropdown ${sel}. Available options: ${allOptions
+            .map((opt) => opt.text)
+            .join(", ")}`
+        );
+      }
+
+      return {
+        value: allOptions[optionIndex].value,
+        name: allOptions[optionIndex].text || "",
+      };
+    },
+    selector,
+    searchText
+  );
+}
+
+export async function scrapingTtsRates({
+  origin = "Finland EUR",
+  destination = "Vietnam VND",
+}: {
+  origin?: string;
+  destination?: string;
+}): Promise<SourceDetails> {
+  const url = "https://www.taptapsend.com";
+  const browser = await launch({ headless: true });
+  const page = await browser.newPage();
+  const noRates: SourceDetails = {
+    name: "taptapsend",
+    lastUpdated: new Date().toISOString(),
+    rate: {
+      sell: 0,
+      buy: 0,
+      transfer: 0,
+    },
+  };
+
+  let result: SourceDetails = noRates;
+
+  try {
+    await page.goto(url, { waitUntil: "networkidle0" });
+    await new Promise((r) => setTimeout(r, WAIT_TIME));
+
+    // Handle origin currency
+    await waitForDropdown(page, "#origin-currency");
+    const fromCurrency = await findCurrencyOption(
+      page,
+      "#origin-currency",
+      origin
+    );
+    await page.select("#origin-currency", fromCurrency.value);
+
+    // Handle destination currency
+    await waitForDropdown(page, "#destination-currency");
+    const toCurrency = await findCurrencyOption(
+      page,
+      "#destination-currency",
+      destination
+    );
+    await page.select("#destination-currency", toCurrency.value);
+
+    // Get exchange rate
+    await new Promise((r) => setTimeout(r, WAIT_TIME));
+    const rate = await page.evaluate(() => {
+      const rateElement = document.querySelector<HTMLInputElement>(
+        "#destination-amount"
+      );
+      return rateElement ? rateElement.value : null;
+    });
+
+    if (rate) {
+      result = {
+        name: "taptapsend",
+        lastUpdated: new Date().toISOString(),
+        rate: {
+          sell: parseFloat(rate),
+          buy: parseFloat(rate),
+          transfer: parseFloat(rate),
+        },
+      };
+    }
+  } catch (error) {
+    console.error(error);
+  } finally {
+    await browser.close();
+  }
+
+  return result;
+}
+
+/* Others */
+export const customLogger = (message: string, ...rest: string[]) => {
+  console.log(message, ...rest);
+};
