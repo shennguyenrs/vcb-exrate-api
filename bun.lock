@@ -4,9 +4,11 @@
     "": {
       "name": "eur-er-api",
       "dependencies": {
+        "@duckdb/node-api": "^1.2.1-alpha.17",
         "fast-xml-parser": "^5.0.9",
         "hono": "^4.7.5",
         "puppeteer": "^24.5.0",
+        "uuid": "^11.1.0",
       },
     },
   },
@@ -14,6 +16,20 @@
     "@babel/code-frame": ["@babel/code-frame@7.26.2", "", { "dependencies": { "@babel/helper-validator-identifier": "^7.25.9", "js-tokens": "^4.0.0", "picocolors": "^1.0.0" } }, "sha512-RJlIHRueQgwWitWgF8OdFYGZX328Ax5BCemNGlqHfplnRT9ESi8JkFlvaVYbS+UubVY6dpv87Fs2u5M29iNFVQ=="],
 
     "@babel/helper-validator-identifier": ["@babel/helper-validator-identifier@7.25.9", "", {}, "sha512-Ed61U6XJc3CVRfkERJWDz4dJwKe7iLmmJsbOGu9wSloNSFttHV0I8g6UAgb7qnK5ly5bGLPd4oXZlxCdANBOWQ=="],
+
+    "@duckdb/node-api": ["@duckdb/node-api@1.2.1-alpha.17", "", { "dependencies": { "@duckdb/node-bindings": "1.2.1-alpha.17" } }, "sha512-jiAxogNOvryS1N7udyy/Qq46b4qrr2A9+oTkaTy6LSx7i7vmCll/H/lO8Ivnu2+WT4j8iB+AziqepEkJymDiIw=="],
+
+    "@duckdb/node-bindings": ["@duckdb/node-bindings@1.2.1-alpha.17", "", { "optionalDependencies": { "@duckdb/node-bindings-darwin-arm64": "1.2.1-alpha.17", "@duckdb/node-bindings-darwin-x64": "1.2.1-alpha.17", "@duckdb/node-bindings-linux-arm64": "1.2.1-alpha.17", "@duckdb/node-bindings-linux-x64": "1.2.1-alpha.17", "@duckdb/node-bindings-win32-x64": "1.2.1-alpha.17" } }, "sha512-JDWw7kMv7ujj6jun7bXQywEsztQ0R1RyKxktuYYmp6e51OEgUM2fYPfnTtoazSdPzTfZdI+IO6XmUiV6reOoLw=="],
+
+    "@duckdb/node-bindings-darwin-arm64": ["@duckdb/node-bindings-darwin-arm64@1.2.1-alpha.17", "", { "os": "darwin", "cpu": "arm64" }, "sha512-pAznmsiuQi3q1AKKYslE13r63jHO9Cl+bDrSIT+Xm5T/gl5wJe9Ge5ujkkQpMB5cnzf6DWg8y+b+22KZ71zi4A=="],
+
+    "@duckdb/node-bindings-darwin-x64": ["@duckdb/node-bindings-darwin-x64@1.2.1-alpha.17", "", { "os": "darwin", "cpu": "x64" }, "sha512-ymmmpngcw6e7sF7RDuMD0H1ruux7Qk8/a2dKLrsu/tDL+Xsc4xHZ3icglvxh01MfZRplFiuP+rZNLGRQRp1fnA=="],
+
+    "@duckdb/node-bindings-linux-arm64": ["@duckdb/node-bindings-linux-arm64@1.2.1-alpha.17", "", { "os": "linux", "cpu": "arm64" }, "sha512-jIC3mu3NummnwiuMf1eyVeI2p+s9Dlq2o+wik9fTfHreDmorJqaT2O2+nBWo1zwqWjnqFmdZAEjKapHzGFkpmw=="],
+
+    "@duckdb/node-bindings-linux-x64": ["@duckdb/node-bindings-linux-x64@1.2.1-alpha.17", "", { "os": "linux", "cpu": "x64" }, "sha512-V7NjuOMjoMyRD0AXqPpidLJNsTzZJjJaCxQyEjvuM8H7U1YlMah7+5wwVUw4M+BVstcPCfgk38nZExi9Hx8Ybg=="],
+
+    "@duckdb/node-bindings-win32-x64": ["@duckdb/node-bindings-win32-x64@1.2.1-alpha.17", "", { "os": "win32", "cpu": "x64" }, "sha512-3upKv5hWO5OZDGSmsto86+9LkWSnKtuzoZgH0dMjh44SgAvv+3zBfUeg3PpGKPxEW807hL20LLoEBCGTgEB9yQ=="],
 
     "@puppeteer/browsers": ["@puppeteer/browsers@2.9.0", "", { "dependencies": { "debug": "^4.4.0", "extract-zip": "^2.0.1", "progress": "^2.0.3", "proxy-agent": "^6.5.0", "semver": "^7.7.1", "tar-fs": "^3.0.8", "yargs": "^17.7.2" }, "bin": { "browsers": "lib/cjs/main-cli.js" } }, "sha512-8+xM+cFydYET4X/5/3yZMHs7sjS6c9I6H5I3xJdb6cinzxWUT/I2QVw4avxCQ8QDndwdHkG/FiSZIrCjAbaKvQ=="],
 
@@ -194,6 +210,8 @@
     "typed-query-selector": ["typed-query-selector@2.12.0", "", {}, "sha512-SbklCd1F0EiZOyPiW192rrHZzZ5sBijB6xM+cpmrwDqObvdtunOHHIk9fCGsoK5JVIYXoyEp4iEdE3upFH3PAg=="],
 
     "undici-types": ["undici-types@6.20.0", "", {}, "sha512-Ny6QZ2Nju20vw1SRHe3d9jVu6gJ+4e3+MMpqu7pqE5HT6WsTSlce++GQmK5UXS8mzV8DSYHrQH+Xrf2jVcuKNg=="],
+
+    "uuid": ["uuid@11.1.0", "", { "bin": { "uuid": "dist/esm/bin/uuid" } }, "sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A=="],
 
     "wrap-ansi": ["wrap-ansi@7.0.0", "", { "dependencies": { "ansi-styles": "^4.0.0", "string-width": "^4.1.0", "strip-ansi": "^6.0.0" } }, "sha512-YVGIj2kamLSTxw6NsZjoBxfSwsn0ycdesmc4p+Q21c5zPuZ1pl+NfxVdxPtdHvmNVOQ6XSYG4AUtyt/Fi7D16Q=="],
 

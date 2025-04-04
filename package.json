@@ -4,9 +4,11 @@
     "dev": "bun --hot index.ts"
   },
   "dependencies": {
+    "@duckdb/node-api": "^1.2.1-alpha.17",
     "fast-xml-parser": "^5.0.9",
     "hono": "^4.7.5",
-    "puppeteer": "^24.5.0"
+    "puppeteer": "^24.5.0",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {}
 }

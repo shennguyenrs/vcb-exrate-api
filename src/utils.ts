@@ -1,4 +1,5 @@
 import { VCB_EXRATE_API } from "@/constants";
+import { getCachedRates, saveRatesCache } from "@/db";
 import {
   ConvertAmountData,
   ExrateItem,
@@ -102,21 +103,57 @@ export async function scrapingVcbRates({
   };
 
   try {
+    const cachedResult = await getCachedRates({
+      source: "vcb",
+      currencyCode: currency,
+    });
+
+    if (cachedResult) {
+      const { data: cached, lastUpdated } = cachedResult;
+      const currencyRate = cached.find(
+        (r: any) => r.currencyCode.toLowerCase() === currency
+      );
+
+      if (currencyRate) {
+        return {
+          name: "vcb",
+          lastUpdated,
+          currencyCode: currencyRate.currencyCode,
+          currencyName: currencyRate.currencyName,
+          rate: {
+            sell: currencyRate.sell,
+            buy: currencyRate.buy,
+            transfer: currencyRate.transfer,
+          },
+        };
+      }
+    }
+
     const res = await fetch(VCB_EXRATE_API);
     const rawText = await res.text();
     const data = parseVcbExrateData(rawText);
-    const currencyRateIdx = data.rates.findIndex(
-      (rate) => rate.currencyCode.toLowerCase() === currency
+
+    await saveRatesCache({
+      source: "vcb",
+      currencyCode: currency,
+      ratesArray: data.rates,
+      lastUpdated: data.lastUpdated,
+    });
+
+    const currencyRate = data.rates.find(
+      (r) => r.currencyCode.toLowerCase() === currency
     );
 
-    if (currencyRateIdx !== -1) {
+    if (currencyRate) {
       return {
         name: "vcb",
         lastUpdated: data.lastUpdated,
+        currencyCode: currencyRate.currencyCode,
+        currencyName: currencyRate.currencyName,
         rate: {
-          sell: data.rates[currencyRateIdx].sell,
-          buy: data.rates[currencyRateIdx].buy,
-          transfer: data.rates[currencyRateIdx].transfer,
+          sell: currencyRate.sell,
+          buy: currencyRate.buy,
+          transfer: currencyRate.transfer,
         },
       };
     }
@@ -197,9 +234,6 @@ export async function scrapingTtsRates({
   origin?: string;
   destination?: string;
 }): Promise<SourceDetails> {
-  const url = "https://www.taptapsend.com";
-  const browser = await launch({ headless: true });
-  const page = await browser.newPage();
   const noRates: SourceDetails = {
     name: "taptapsend",
     lastUpdated: new Date().toISOString(),
@@ -210,57 +244,100 @@ export async function scrapingTtsRates({
     },
   };
 
-  let result: SourceDetails = noRates;
-
   try {
-    await page.goto(url, { waitUntil: "networkidle0" });
-    await new Promise((r) => setTimeout(r, WAIT_TIME));
-
-    // Handle origin currency
-    await waitForDropdown(page, "#origin-currency");
-    const fromCurrency = await findCurrencyOption(
-      page,
-      "#origin-currency",
-      origin
-    );
-    await page.select("#origin-currency", fromCurrency.value);
-
-    // Handle destination currency
-    await waitForDropdown(page, "#destination-currency");
-    const toCurrency = await findCurrencyOption(
-      page,
-      "#destination-currency",
-      destination
-    );
-    await page.select("#destination-currency", toCurrency.value);
-
-    // Get exchange rate
-    await new Promise((r) => setTimeout(r, WAIT_TIME));
-    const rate = await page.evaluate(() => {
-      const rateElement = document.querySelector<HTMLInputElement>(
-        "#destination-amount"
-      );
-      return rateElement ? rateElement.value : null;
+    const cachedResult = await getCachedRates({
+      source: "taptapsend",
+      currencyCode: origin + "_" + destination,
     });
 
-    if (rate) {
-      result = {
+    if (cachedResult && cachedResult.data && cachedResult.data.length > 0) {
+      const cachedRate = cachedResult.data[0];
+      return {
         name: "taptapsend",
-        lastUpdated: new Date().toISOString(),
+        lastUpdated: cachedResult.lastUpdated,
         rate: {
-          sell: parseFloat(rate),
-          buy: parseFloat(rate),
-          transfer: parseFloat(rate),
+          sell: cachedRate.sell,
+          buy: cachedRate.buy,
+          transfer: cachedRate.transfer,
         },
       };
     }
+
+    const url = "https://www.taptapsend.com";
+    const browser = await launch({ headless: true });
+    const page = await browser.newPage();
+
+    let result: SourceDetails = noRates;
+
+    try {
+      await page.goto(url, { waitUntil: "networkidle0" });
+      await new Promise((r) => setTimeout(r, WAIT_TIME));
+
+      // Handle origin currency
+      await waitForDropdown(page, "#origin-currency");
+      const fromCurrency = await findCurrencyOption(
+        page,
+        "#origin-currency",
+        origin
+      );
+      await page.select("#origin-currency", fromCurrency.value);
+
+      // Handle destination currency
+      await waitForDropdown(page, "#destination-currency");
+      const toCurrency = await findCurrencyOption(
+        page,
+        "#destination-currency",
+        destination
+      );
+      await page.select("#destination-currency", toCurrency.value);
+
+      // Get exchange rate
+      await new Promise((r) => setTimeout(r, WAIT_TIME));
+      const rate = await page.evaluate(() => {
+        const rateElement = document.querySelector<HTMLInputElement>(
+          "#destination-amount"
+        );
+        return rateElement ? rateElement.value : null;
+      });
+
+      if (rate) {
+        const parsedRate = parseFloat(rate);
+        const ratesArray = [
+          {
+            sell: parsedRate,
+            buy: parsedRate,
+            transfer: parsedRate,
+          },
+        ];
+
+        await saveRatesCache({
+          source: "taptapsend",
+          currencyCode: origin + "_" + destination,
+          ratesArray,
+          lastUpdated: new Date().toISOString(),
+        });
+
+        result = {
+          name: "taptapsend",
+          lastUpdated: new Date().toISOString(),
+          rate: {
+            sell: parsedRate,
+            buy: parsedRate,
+            transfer: parsedRate,
+          },
+        };
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      await browser.close();
+    }
+
+    return result;
   } catch (error) {
     console.error(error);
-  } finally {
-    await browser.close();
+    return noRates;
   }
-
-  return result;
 }
 
 /* Others */

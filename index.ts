@@ -1,3 +1,4 @@
+import { initDb } from "@/db";
 import convertRoutes from "@/routes/convert";
 import ratesRoutes from "@/routes/rates";
 import taptapsendRoutes from "@/routes/taptapsend";
@@ -12,17 +13,24 @@ const app = new Hono();
 app.use(logger(customLogger));
 
 // Routes
-// /rates/:bank/:currency
 app.route("/rates", ratesRoutes);
 app.route("/rates/vcb", vcbRoutes);
 app.route("/rates/taptapsend", taptapsendRoutes);
-
-// /convert/:currency/:amount
 app.route("/convert", convertRoutes);
 
 app.notFound((c) => c.text("Endpoint not found"));
 
-export default {
-  port: 3000,
-  fetch: app.fetch,
-};
+export default await (async () => {
+  try {
+    await initDb();
+    console.log("DuckDB initialized");
+  } catch (err) {
+    console.error("Failed to initialize DuckDB:", err);
+    process.exit(1);
+  }
+
+  return {
+    port: 3000,
+    fetch: app.fetch,
+  };
+})();
