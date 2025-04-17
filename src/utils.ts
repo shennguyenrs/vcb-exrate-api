@@ -271,7 +271,15 @@ export async function scrapingTtsRates({
     }
 
     const url = "https://www.taptapsend.com";
-    const browser = await launch({ headless: true });
+    const browser = await launch({
+      headless: true,
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-gpu",
+      ],
+    });
     const page = await browser.newPage();
 
     let result: SourceDetails = noRates;
