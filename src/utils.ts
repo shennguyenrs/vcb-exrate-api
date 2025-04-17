@@ -1,11 +1,11 @@
-import { VCB_EXRATE_API } from "@/constants";
-import { getCachedRates, saveRatesCache } from "@/db";
+import { VCB_EXRATE_API } from "./constants";
+import { getCachedRates, saveRatesCache } from "./db";
 import {
   ConvertAmountData,
   ExrateItem,
   FormattedExrateData,
   SourceDetails,
-} from "@/types";
+} from "./types";
 import { XMLParser } from "fast-xml-parser";
 import { launch } from "puppeteer";
 

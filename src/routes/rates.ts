@@ -1,5 +1,5 @@
-import { ApiResponse } from "@/types";
-import { scrapingTtsRates, scrapingVcbRates } from "@/utils";
+import { ApiResponse } from "../types";
+import { scrapingTtsRates, scrapingVcbRates } from "../utils";
 import { Context, Hono } from "hono";
 
 const ratesRoutes = new Hono();

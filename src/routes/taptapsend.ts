@@ -1,5 +1,5 @@
 import { Context, Hono } from "hono";
-import { scrapingTtsRates } from "@/utils";
+import { scrapingTtsRates } from "../utils";
 
 const ttsRoutes = new Hono();
 ttsRoutes.get("/eur", getRatesByCurrency);

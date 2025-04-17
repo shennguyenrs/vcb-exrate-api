@@ -1,5 +1,5 @@
-import { VCB_EXRATE_API } from "@/constants";
-import { parseVcbExrateData } from "@/utils";
+import { VCB_EXRATE_API } from "../constants";
+import { parseVcbExrateData } from "../utils";
 import { Context, Hono } from "hono";
 
 const vcbRoutes = new Hono();

@@ -1,9 +1,9 @@
-import { initDb } from "@/db";
-import convertRoutes from "@/routes/convert";
-import ratesRoutes from "@/routes/rates";
-import taptapsendRoutes from "@/routes/taptapsend";
-import vcbRoutes from "@/routes/vcb";
-import { customLogger } from "@/utils";
+import { initDb } from "./src/db";
+import convertRoutes from "./src/routes/convert";
+import ratesRoutes from "./src/routes/rates";
+import taptapsendRoutes from "./src/routes/taptapsend";
+import vcbRoutes from "./src/routes/vcb";
+import { customLogger } from "./src/utils";
 import { Hono } from "hono";
 import { logger } from "hono/logger";
 

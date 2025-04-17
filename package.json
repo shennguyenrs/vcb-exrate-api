@@ -1,7 +1,8 @@
 {
   "name": "eur-er-api",
   "scripts": {
-    "dev": "bun --hot index.ts"
+    "dev": "bun --hot index.ts",
+    "build": "tsc"
   },
   "dependencies": {
     "@duckdb/node-api": "^1.2.1-alpha.17",

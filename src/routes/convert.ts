@@ -1,5 +1,5 @@
 import { Context, Hono } from "hono";
-import { convertVcb } from "@/utils";
+import { convertVcb } from "../utils";
 
 const convertRoutes = new Hono();
 
