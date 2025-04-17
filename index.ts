@@ -30,6 +30,7 @@ export default await (async () => {
   }
 
   return {
+    idleTimeout: 255,
     port: 3000,
     fetch: app.fetch,
   };
