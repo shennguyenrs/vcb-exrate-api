@@ -31,8 +31,16 @@ export function parseVcbExrateData(xmlData: string): FormattedExrateData {
     ? result.ExrateList.Exrate
     : [result.ExrateList.Exrate];
 
+  // Parse time
+  const targetTimezoneOffset = 7 * 60; // VN timezone +7
+  const lastUpdateObj = new Date(result.ExrateList.DateTime);
+  const lastUpdateInTargetTimezone = convertToMachineTimezone(
+    lastUpdateObj,
+    targetTimezoneOffset
+  );
+
   const formattedData: FormattedExrateData = {
-    lastUpdated: result.ExrateList.DateTime,
+    lastUpdated: lastUpdateInTargetTimezone.toISOString(),
     source: result.ExrateList.Source,
     rates: exrates.map((rate: ExrateItem) => ({
       currencyCode: rate.CurrencyCode,
@@ -110,6 +118,7 @@ export async function scrapingVcbRates({
 
     if (cachedResult) {
       const { data: cached, lastUpdated } = cachedResult;
+
       const currencyRate = cached.find(
         (r: any) => r.currencyCode.toLowerCase() === currency
       );
@@ -117,9 +126,7 @@ export async function scrapingVcbRates({
       if (currencyRate) {
         return {
           name: "vcb",
-          lastUpdated,
-          currencyCode: currencyRate.currencyCode,
-          currencyName: currencyRate.currencyName,
+          lastUpdated: lastUpdated ?? "",
           rate: {
             sell: currencyRate.sell,
             buy: currencyRate.buy,
@@ -148,8 +155,6 @@ export async function scrapingVcbRates({
       return {
         name: "vcb",
         lastUpdated: data.lastUpdated,
-        currencyCode: currencyRate.currencyCode,
-        currencyName: currencyRate.currencyName,
         rate: {
           sell: currencyRate.sell,
           buy: currencyRate.buy,
@@ -250,11 +255,13 @@ export async function scrapingTtsRates({
       currencyCode: origin + "_" + destination,
     });
 
-    if (cachedResult && cachedResult.data && cachedResult.data.length > 0) {
-      const cachedRate = cachedResult.data[0];
+    if (cachedResult) {
+      const { data: cached, lastUpdated } = cachedResult;
+      const cachedRate = cached[0];
+
       return {
         name: "taptapsend",
-        lastUpdated: cachedResult.lastUpdated,
+        lastUpdated: lastUpdated ?? "",
         rate: {
           sell: cachedRate.sell,
           buy: cachedRate.buy,
@@ -344,3 +351,12 @@ export async function scrapingTtsRates({
 export const customLogger = (message: string, ...rest: string[]) => {
   console.log(message, ...rest);
 };
+
+function convertToMachineTimezone(dateObj: Date, timezoneOffset: number) {
+  let utcTime =
+    dateObj.getTime() -
+    timezoneOffset * 60000 -
+    dateObj.getTimezoneOffset() * 60000;
+  let targetTime = new Date(utcTime);
+  return targetTime;
+}

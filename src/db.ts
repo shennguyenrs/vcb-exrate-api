@@ -35,24 +35,31 @@ export async function getCachedRates({
 
   const reader = await conn.runAndReadAll(
     `
-    SELECT data FROM rates_cache
-    WHERE source = $1 AND currency_code = $2 AND expires_at > CURRENT_TIMESTAMP
+    SELECT data, last_updated FROM rates_cache
+    WHERE source = $1 AND currency_code = $2 AND expires_at > CAST(CURRENT_TIMESTAMP AT TIME ZONE 'UTC' AS TIMESTAMP)
     LIMIT 1
     `,
     [source, currencyCode]
   );
 
   const rows = reader.getRows();
+
   if (rows.length > 0) {
-    const jsonStr = rows[0][0];
-    if (typeof jsonStr === "string") {
+    const data = rows[0][0];
+    const lastUpdated = rows[0][1]?.toString();
+
+    if (typeof data === "string") {
       try {
-        return JSON.parse(jsonStr);
+        return {
+          data: JSON.parse(data),
+          lastUpdated,
+        };
       } catch {
         return null;
       }
     }
   }
+
   return null;
 }
 

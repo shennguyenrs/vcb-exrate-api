@@ -1,5 +1,4 @@
 import { VCB_EXRATE_API } from "@/constants";
-import { FormattedExrateData } from "@/types";
 import { parseVcbExrateData } from "@/utils";
 import { Context, Hono } from "hono";
 
